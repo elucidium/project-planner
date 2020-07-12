@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome to Firebase Hosting</title>
+
+  <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css">
+  <link rel="stylesheet" href="assets/fonts/ionicons.min.css">
+  <link rel="stylesheet" href="assets/css/Login-Form-Clean.css">
+  <link rel="stylesheet" href="assets/css/Navigation-Clean.css">
+  <link rel="stylesheet" href="assets/css/styles.css">
+
+  <script src="assets/js/jquery.min.js"></script>
+  <script src="assets/bootstrap/js/bootstrap.min.js"></script>
+  <script src="assets/js/jsrender.min.js"></script>
+
+  <!-- update the version number as needed -->
+  <script defer src="/__/firebase/7.16.0/firebase-app.js"></script>
+  <!-- include only the Firebase features as you need -->
+  <script defer src="/__/firebase/7.16.0/firebase-auth.js"></script>
+  <script defer src="/__/firebase/7.16.0/firebase-database.js"></script>
+  <!-- initialize the SDK after all desired features are loaded -->
+  <script defer src="/__/firebase/init.js"></script>
+
+  <script id="loginTmpl" type="text/x-jsrender">
+    <div class="login-clean" style="width: 100%;height: 100%;">
+      <form method="post">
+          <h2 class="sr-only">Login Form</h2>
+          <div class="illustration"><i class="icon ion-android-create"></i></div>
+          <div class="form-group"><input class="form-control" type="email" name="email" placeholder="email"></div>
+          <div class="form-group"><input class="form-control" type="password" name="password" placeholder="password"></div>
+          <div class="form-group"><button class="btn btn-primary btn-block" type="button" style="margin: 0px;padding: 2px 12px;" onclick="signin();">log in</button></div>
+          <a class="forgot" href="javascript:showSignup();">sign up</a>
+      </form>
+    </div>
+  </script>
+
+  <script id="signupTmpl" type="text/x-jsrender">
+    <div class="login-clean" style="width: 100%;height: 100%;">
+      <form method="post">
+          <h2 class="sr-only">Login Form</h2>
+          <div class="illustration"><i class="icon ion-android-create"></i></div>
+          <div class="form-group"><input class="form-control" type="email" name="email" placeholder="email"></div>
+          <div class="form-group"><input class="form-control" type="password" name="password" placeholder="password"></div>
+          <div class="form-group"><button class="btn btn-primary btn-block" type="button" style="margin: 0px;padding: 2px 12px;" onclick="signup();">sign up</button></div>
+          <a class="forgot" href="javascript:showLogin();">log in</a></form>
+      </form>
+    </div>
+  </script>
+
+  <script id="upcomingMilestoneTmpl" type="text/x-jsrender">
+    <div class="row" data-milestone-id={{:milestoneId}} data-assignment-id={{:assignmentId}}>
+        <div class="col text-center text-sm-left text-md-left text-lg-left text-xl-left align-self-center">
+            <h3 style="margin: 0px;display: inline;">{{:milestoneName}}</h3>
+        </div>
+        <div class="col-12 col-sm-auto col-md-auto col-lg-auto col-xl-auto text-center align-self-center col-auto">
+            <p class="item-label">{{:assignmentName}}</p>
+            <p class="item-label">due {{:dueDate}}, {{:dueTime}}</p>
+            <div class="clearfix d-md-none d-lg-none d-xl-none"></div>
+            <button class="btn btn-primary" type="button" onclick="deleteMilestone(this.closest('.row').getAttribute('data-milestone-id'), this.closest('.row').getAttribute('data-assignment-id'));">delete</button>
+            <button class="btn btn-primary" type="button" onclick="markMilestoneCompleted(this.closest('.row').getAttribute('data-milestone-id'));">done</button>
+        </div>
+    </div>
+  </script>
+
+  <script id="upcomingAssignmentTmpl" type="text/x-jsrender">
+    <div class="row" data-assignment-id={{:assignmentId}} data-course-id={{:courseId}}>
+      <div class="col text-center text-sm-left text-md-left text-lg-left text-xl-left align-self-center">
+          <h3 style="margin: 0px;display: inline;">{{:assignmentName}}</h3>
+      </div>
+      <div class="col-12 col-sm-auto col-md-auto col-lg-auto col-xl-auto text-center align-self-center col-auto">
+          <p class="item-label">{{:courseCode}}</p>
+          <p class="item-label">due {{:dueDate}}, {{:dueTime}}</p>
+          <p class="item-label">{{:milestonesCount}} milestone{{:plural}}</p>
+          <div class="clearfix d-md-none d-lg-none d-xl-none"></div>
+          <button class="btn btn-primary" type="button" onclick="deleteAssignment(this.closest('.row').getAttribute('data-assignment-id'), this.closest('.row').getAttribute('data-course-id'));">delete</button>
+          <button class="btn btn-primary" type="button" onclick="markAssignmentCompleted(this.closest('.row').getAttribute('data-assignment-id'));">done</button>
+      </div>
+    </div>
+  </script>
+
+  <script id="completedMilestoneTmpl" type="text/x-jsrender">
+    <div class="row" data-milestone-id={{:milestoneId}} data-assignment-id={{:assignmentId}}>
+      <div class="col text-center text-sm-left text-md-left text-lg-left text-xl-left align-self-center">
+          <h3 style="margin: 0px;display: inline;">{{:milestoneName}}</h3>
+      </div>
+      <div class="col-12 col-sm-auto col-md-auto col-lg-auto col-xl-auto text-center align-self-center col-auto">
+          <p class="item-label">{{:assignmentName}}</p>
+          <p class="item-label">due {{:dueDate}}, {{:dueTime}}</p>
+          <div class="clearfix d-md-none d-lg-none d-xl-none"></div>
+          <button class="btn btn-primary" type="button" onclick="deleteMilestone(this.closest('.row').getAttribute('data-milestone-id'), this.closest('.row').getAttribute('data-assignment-id'));">delete</button>
+          <button class="btn btn-primary" type="button" onclick="reopenMilestone(this.closest('.row').getAttribute('data-milestone-id'));">reopen</button>
+      </div>
+    </div>
+  </script>
+
+  <script id="completedAssignmentTmpl" type="text/x-jsrender">
+    <div class="row" data-assignment-id={{:assignmentId}} data-course-id={{:courseId}}>
+      <div class="col text-center text-sm-left text-md-left text-lg-left text-xl-left align-self-center">
+          <h3 style="margin: 0px;display: inline;">{{:assignmentName}}</h3>
+      </div>
+      <div class="col-12 col-sm-auto col-md-auto col-lg-auto col-xl-auto text-center align-self-center col-auto">
+          <p class="item-label">{{:courseCode}}</p>
+          <p class="item-label">due {{:dueDate}}, {{:dueTime}}</p>
+          <p class="item-label">{{:milestonesCount}} milestone{{:plural}}</p>
+          <div class="clearfix d-md-none d-lg-none d-xl-none"></div>
+          <button class="btn btn-primary" type="button" onclick="deleteAssignment(this.closest('.row').getAttribute('data-assignment-id'), this.closest('.row').getAttribute('data-course-id'));">delete</button>
+          <button class="btn btn-primary" type="button" onclick="reopenAssignment(this.closest('.row').getAttribute('data-assignment-id'));">reopen</button>
+      </div>
+    </div>
+  </script>
+
+  <script id="courseTmpl" type="text/x-jsrender">
+    <div class="row" id="courseRow" data-course-id={{:courseId}}>
+      <div class="col text-center text-sm-left text-md-left text-lg-left text-xl-left align-self-center">
+          <h3 style="margin: 0px;display: inline;">{{:courseName}}</h3>
+      </div>
+      <div class="col-12 col-sm-auto col-md-auto col-lg-auto col-xl-auto text-center align-self-center col-auto">
+          <p class="item-label">{{:courseCode}}</p>
+          <p class="item-label">{{:assignmentsCount}} assignments</p>
+          <div class="clearfix d-md-none d-lg-none d-xl-none"></div>
+          <button class="btn btn-primary" type="button" onclick="deleteCourse(this.closest('.row').getAttribute('data-course-id'));">delete</button>
+      </div>
+    </div>
+  </script>
+
+  <script id="portalTmpl" type="text/x-jsrender">
+  <nav class="navbar navbar-light navbar-expand-sm navigation-clean">
+    <div class="container"><a class="navbar-brand" href="#">Project Planner</a>
+        <ul class="nav navbar-nav ml-auto">
+            <li class="nav-item d-none d-sm-none d-md-inline d-lg-inline d-xl-inline" role="presentation">
+                <p class="username">{{:username}}</p>
+            </li>
+            <li class="nav-item d-flex align-items-center" role="presentation"><button class="btn btn-primary" type="button" onclick="signout();">log out</button></li>
+        </ul>
+    </div>
+  </nav>
+  <div style="padding-top: 60px;"></div>
+  <div class="container">
+    <div class="row">
+        <div class="col-3 offset-0 d-none d-sm-none d-md-inline d-lg-inline d-xl-inline one">
+            <div class="stat-box">
+                <div class="col">
+                    <h1 class="text-center" id="milestones-count"></h1>
+                    <p class="text-center">upcoming milestones</p>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="col">
+                    <h1 class="text-center" id="assignments-count"></h1>
+                    <p class="text-center">upcoming assignments</p>
+                </div>
+            </div>
+            <div class="stat-box">
+                <div class="col">
+                    <h1 class="text-center" id="courses-count"></h1>
+                    <p class="text-center">courses</p>
+                </div>
+            </div>
+            <div class="text-center"><button class="btn btn-primary" type="button" data-toggle="modal" data-target="#course-modal">add course</button></div>
+            <div class="text-center"><button class="btn btn-primary" type="button" data-toggle="modal" data-target="#assignment-modal" onclick="loadCourseOptions();">add assignment</button></div>
+            <div class="text-center"><button class="btn btn-primary" type="button" data-toggle="modal" data-target="#milestone-modal" onclick="loadAssignmentOptions();">add milestone</button></div>
+        </div>
+        <div class="col-12 col-sm-12 col-md-9 col-lg-9 col-xl-9 offset-0 offset-sm-0 offset-md-3 offset-lg-3 offset-xl-3 two">
+            <div class="row d-md-none d-lg-none d-xl-none" style="margin: 15px -15px;margin-bottom: 0px;">
+                <div class="col-12 text-center align-self-center col-auto"><button class="btn btn-primary" type="button" data-toggle="modal" data-target="#course-modal">add course</button><button class="btn btn-primary" type="button" data-toggle="modal" data-target="#assignment-modal">add assignment</button>
+                    <button
+                        class="btn btn-primary" type="button" data-toggle="modal" data-target="#milestone-modal">add milestone</button>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col" style="padding: 15px 15px 5px;">
+                        <h2 style="margin: 0px;">Upcoming milestones</h2>
+                    </div>
+                </div>
+                <div id="upcoming-milestones"></div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col" style="padding: 15px 15px 5px;">
+                        <h2 style="margin: 0px;">Upcoming assignments</h2>
+                    </div>
+                </div>
+                <div id="upcoming-assignments"></div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col" style="padding: 15px 15px 5px;">
+                        <h2 style="margin: 0px;">Completed milestones</h2>
+                    </div>
+                </div>
+                <div id="completed-milestones"></div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col" style="padding: 15px 15px 5px;">
+                        <h2 style="margin: 0px;">Completed assignments</h2>
+                    </div>
+                </div>
+                <div id="completed-assignments"></div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col" style="padding: 15px 15px 5px;">
+                        <h2 style="margin: 0px;">Courses</h2>
+                    </div>
+                </div>
+                <div id="courses"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="modal fade" role="dialog" tabindex="-1" id="course-modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Add Course</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+             </div>
+            <div class="modal-body">
+              <input type="text" class="modal-input" placeholder="course code" id="course-code">
+              <input type="text" class="modal-input" placeholder="course name" id="course-name">
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light" type="button" data-dismiss="modal">cancel</button>
+              <button class="btn btn-primary" type="button" onclick="submitCourse();">add course</button>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="modal fade" role="dialog" tabindex="-1" id="assignment-modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Add Assignment</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <select class="modal-select" id="course-select" required="">
+              </select>
+              <input type="text" class="modal-input" placeholder="assignment name" id="assignment-name">
+              <input class="modal-input" type="date" id="assignment-date">
+              <input class="modal-input" type="time" id="assignment-time">
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light" type="button" data-dismiss="modal">cancel</button>
+              <button class="btn btn-primary" type="button" onclick="submitAssignment();">add assignment</button>
+            </div>
+        </div>
+    </div>
+  </div>
+  <div class="modal fade" role="dialog" tabindex="-1" id="milestone-modal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+              <h4 class="modal-title">Add Milestone</h4>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">×</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <select class="modal-select" id="assignment-select" required="">
+                <option value="12" selected="">This is item 1</option>
+                <option value="13">This is item 2</option>
+                <option value="14">This is item 3</option>
+              </select>
+              <input type="text" class="modal-input" placeholder="milestone name" id="milestone-name">
+              <input class="modal-input" type="date" id="milestone-date">
+              <input class="modal-input" type="time" id="milestone-time">
+            </div>
+            <div class="modal-footer">
+              <button class="btn btn-light" type="button" data-dismiss="modal">cancel</button>
+              <button class="btn btn-primary" type="button" onclick="submitMilestone();">add milestone</button>
+            </div>
+        </div>
+    </div>
+  </div>  
+  </script>
+
+  <script src="assets/js/script.js"></script>  
+</head>
+
+<body style="width: 100%;height: 100%;">
+  
+</body>
+
+
+
+</html>
